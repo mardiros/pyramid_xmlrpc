@@ -1,11 +1,12 @@
 import unittest
 from pyramid import testing
 
+
 class TestXMLRPCMarshal(unittest.TestCase):
     def _callFUT(self, value):
         from pyramid_xmlrpc import xmlrpc_marshal
         return xmlrpc_marshal(value)
-        
+
     def test_xmlrpc_marshal_normal(self):
         data = 1
         marshalled = self._callFUT(data)
@@ -19,11 +20,12 @@ class TestXMLRPCMarshal(unittest.TestCase):
         data = self._callFUT(fault)
         self.assertEqual(data, xmlrpclib.dumps(fault))
 
+
 class TestXMLRPResponse(unittest.TestCase):
     def _callFUT(self, value):
         from pyramid_xmlrpc import xmlrpc_response
         return xmlrpc_response(value)
-        
+
     def test_xmlrpc_response(self):
         import xmlrpclib
         data = 1
@@ -33,7 +35,8 @@ class TestXMLRPResponse(unittest.TestCase):
                                                         methodresponse=True))
         self.assertEqual(response.content_length, len(response.body))
         self.assertEqual(response.status, '200 OK')
-        
+
+
 class TestParseXMLRPCRequest(unittest.TestCase):
     def _callFUT(self, request):
         from pyramid_xmlrpc import parse_xmlrpc_request
@@ -54,6 +57,7 @@ class TestParseXMLRPCRequest(unittest.TestCase):
         request = testing.DummyRequest()
         request.content_length = 1 << 24
         self.assertRaises(ValueError, self._callFUT, request)
+
 
 class TestDecorator(unittest.TestCase):
     def _callFUT(self, unwrapped):
@@ -76,15 +80,17 @@ class TestDecorator(unittest.TestCase):
         request.content_length = len(packet)
         response = wrapped(context, request)
         self.assertEqual(response.body, xmlrpclib.dumps((param,),
-                                                       methodresponse=True))
+                                                        methodresponse=True))
+
 
 class TestBaseClass(unittest.TestCase):
 
     def test_normal(self):
-        
+
         from pyramid_xmlrpc import XMLRPCView
+
         class Test(XMLRPCView):
-            def a_method(self,param):
+            def a_method(self, param):
                 return param
 
         # set up a request
@@ -97,7 +103,7 @@ class TestBaseClass(unittest.TestCase):
 
         # instantiate the view
         context = testing.DummyModel()
-        instance = Test(context,request)
+        instance = Test(context, request)
 
         # these are fair game for the methods to use if they want
         self.failUnless(instance.context is context)
@@ -106,4 +112,4 @@ class TestBaseClass(unittest.TestCase):
         # exercise it
         response = instance()
         self.assertEqual(response.body, xmlrpclib.dumps((param,),
-                                                       methodresponse=True))
+                                                        methodresponse=True))

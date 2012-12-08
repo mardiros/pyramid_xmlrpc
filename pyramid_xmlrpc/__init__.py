@@ -1,6 +1,7 @@
 import xmlrpclib
 import webob
 
+
 def xmlrpc_marshal(data):
     """ Marshal a Python data structure into an XML document suitable
     for use as an XML-RPC response and return the document.  If
@@ -9,7 +10,8 @@ def xmlrpc_marshal(data):
     if isinstance(data, xmlrpclib.Fault):
         return xmlrpclib.dumps(data)
     else:
-        return xmlrpclib.dumps((data,),  methodresponse=True)
+        return xmlrpclib.dumps((data,), methodresponse=True)
+
 
 def xmlrpc_response(data):
     """ Marshal a Python data structure into a webob ``Response``
@@ -22,6 +24,7 @@ def xmlrpc_response(data):
     response.content_length = len(xml)
     return response
 
+
 def parse_xmlrpc_request(request):
     """ Deserialize the body of a request from an XML-RPC request
     document into a set of params and return a two-tuple.  The first
@@ -32,6 +35,7 @@ def parse_xmlrpc_request(request):
         raise ValueError('Body too large (%s bytes)' % request.content_length)
     params, method = xmlrpclib.loads(request.body)
     return params, method
+
 
 def xmlrpc_view(wrapped):
     """ This decorator turns functions which accept params and return Python
@@ -83,23 +87,24 @@ def xmlrpc_view(wrapped):
     In other words do *not* decorate it in :func:`~pyramid_xmlrpc.xmlrpc_view`,
     then :class:`~pyramid.view.view_config`; it won't work.
     """
-    
+
     def _curried(context, request):
         params, method = parse_xmlrpc_request(request)
         value = wrapped(context, *params)
         return xmlrpc_response(value)
     _curried.__name__ = wrapped.__name__
-    _curried.__grok_module__ = wrapped.__module__ 
+    _curried.__grok_module__ = wrapped.__module__
 
     return _curried
-    
+
+
 class XMLRPCView:
     """A base class for a view that serves multiple methods by XML-RPC.
 
     Subclass and add your methods as described in the documentation.
     """
 
-    def __init__(self,context,request):
+    def __init__(self, context, request):
         self.context = context
         self.request = request
 
@@ -113,7 +118,7 @@ class XMLRPCView:
         .. warning::
           Do not override this method in any subclass if you
           want XML-RPC to continute to work!
-          
+
         """
         params, method = parse_xmlrpc_request(self.request)
-        return xmlrpc_response(getattr(self,method)(*params))
+        return xmlrpc_response(getattr(self, method)(*params))
