@@ -1,31 +1,35 @@
 import xmlrpclib
 import webob
 
+from pyramid.settings import asbool
 
-def xmlrpc_marshal(data):
+
+def xmlrpc_marshal(data, allow_none=False, encoding=None):
     """ Marshal a Python data structure into an XML document suitable
     for use as an XML-RPC response and return the document.  If
     ``data`` is an ``xmlrpclib.Fault`` instance, it will be marshalled
     into a suitable XML-RPC fault response."""
     if isinstance(data, xmlrpclib.Fault):
-        return xmlrpclib.dumps(data)
+        return xmlrpclib.dumps(data, allow_none=allow_none, encoding=encoding)
     else:
-        return xmlrpclib.dumps((data,), methodresponse=True)
+        return xmlrpclib.dumps((data,), methodresponse=True,
+                               allow_none=allow_none,
+                               encoding=encoding)
 
 
-def xmlrpc_response(data):
+def xmlrpc_response(data, allow_none=False, encoding=None):
     """ Marshal a Python data structure into a webob ``Response``
     object with a body that is an XML document suitable for use as an
     XML-RPC response with a content-type of ``text/xml`` and return
     the response."""
-    xml = xmlrpc_marshal(data)
+    xml = xmlrpc_marshal(data, allow_none=allow_none, encoding=encoding)
     response = webob.Response(xml)
     response.content_type = 'text/xml'
     response.content_length = len(xml)
     return response
 
 
-def parse_xmlrpc_request(request):
+def parse_xmlrpc_request(request, use_datetime=False):
     """ Deserialize the body of a request from an XML-RPC request
     document into a set of params and return a two-tuple.  The first
     element in the tuple is the method params as a sequence, the
@@ -33,7 +37,7 @@ def parse_xmlrpc_request(request):
     if request.content_length > (1 << 23):
         # protect from DOS (> 8MB body)
         raise ValueError('Body too large (%s bytes)' % request.content_length)
-    params, method = xmlrpclib.loads(request.body)
+    params, method = xmlrpclib.loads(request.body, use_datetime)
     return params, method
 
 
@@ -103,6 +107,9 @@ class XMLRPCView:
 
     Subclass and add your methods as described in the documentation.
     """
+    allow_none = False
+    charset = None
+    use_datetime = False
 
     def __init__(self, context, request):
         self.context = context
@@ -120,5 +127,14 @@ class XMLRPCView:
           want XML-RPC to continute to work!
 
         """
-        params, method = parse_xmlrpc_request(self.request)
-        return xmlrpc_response(getattr(self, method)(*params))
+        params, method = parse_xmlrpc_request(self.request, self.use_datetime)
+        return xmlrpc_response(getattr(self, method)(*params), self.allow_none,
+                               self.charset)
+
+
+def includeme(config):
+    settings = config.registry.settings
+    XMLRPCView.allow_none = asbool(settings.get('xmlrpc.allow_none', False))
+    XMLRPCView.use_datetime = asbool(settings.get('xmlrpc.use_datetime',
+                                                  False))
+    XMLRPCView.charset = settings.get('xmlrpc.charset')
