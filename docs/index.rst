@@ -161,6 +161,34 @@ client:
    >>> s.say_goodbye()
    Goodbye, cruel world
 
+
+.. _configuration:
+
+Configuration XML-RPC
+~~~~~~~~~~~~~~~~~~~~~
+
+XML RPC serialization can be configured as in the `Python Standard 
+Library <http://docs.python.org/2/library/xmlrpclib.html>`_.
+
+  - ``nil`` xml rpc extension
+  - cast every xmlrpc ``datetime.iso8601`` to python `datetime.datetime` type
+  - use an xml encoding in the response
+
+These parameters are set in the :mod:`pyramid` .ini configuration file
+like below:
+
+.. code-block:: ini
+
+   [app:main]
+
+   pyramid.includes =
+     pyramid_xmlrpc
+
+   xmlrpc.encoding = utf-8
+   xmlrpc.allow_none = True
+   xmlrpc.datetime = True
+
+
 .. _api:
 
 API Documentation for :mod:`pyramid_xmlrpc`
