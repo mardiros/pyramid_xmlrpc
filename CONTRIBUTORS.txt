@@ -109,3 +109,6 @@ Contributors
 - Chris McDonough, 2010/11/08
 
 - Tres Seaver, 2010/11/09
+
+- Guillaume Gauvrit, 2012/12/08
+
